@@ -1,2 +1,2 @@
-# elaphure
+# Elaphure
 Simple PHP Framework
