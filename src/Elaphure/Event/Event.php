@@ -14,24 +14,28 @@ namespace Elaphure\Event;
 class Event
 {
     /**
+     * 产生事件的目标对象
      * 
      * @var object
      */
     protected $target;
     
     /**
+     * 事件类型
      * 
      * @var string
      */
     protected $type;
     
     /**
+     * 是否可以取消事件的默认行为
      * 
      * @var bool
      */
     protected $cancelable;
     
     /**
+     * 事件附带参数
      * 
      * @var mixed
      */
@@ -41,6 +45,7 @@ class Event
     private $stopped = false;
     
     /**
+     * 获取事件附带参数
      * 
      * @return mixed
      */
@@ -50,6 +55,7 @@ class Event
     }
     
     /**
+     * 获取产生事件的目标对象
      * 
      * @return object
      */
@@ -59,6 +65,7 @@ class Event
     }
     
     /**
+     * 获取事件类型
      * 
      * @return string
      */
@@ -68,6 +75,8 @@ class Event
     }
     
     /**
+     * 阻止事件默认行为
+     * 
      * @return void
      */
     public function preventDefault()
@@ -78,6 +87,7 @@ class Event
     }
     
     /**
+     * 是否可以取消事件的默认行为
      * 
      * @return bool
      */
@@ -87,6 +97,8 @@ class Event
     }
     
     /**
+     * 阻止事件冒泡
+     * 
      * @return void
      */
     public function stopPropagation()
@@ -95,6 +107,7 @@ class Event
     }
     
     /**
+     * 是否已阻止事件冒泡
      * 
      * @return bool
      */

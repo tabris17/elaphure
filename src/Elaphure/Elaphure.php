@@ -10,7 +10,8 @@ namespace Elaphure;
 
 use Elaphure\Di\Di;
 use Elaphure\Config\Config;
-use Elaphure\Config\Factory as ConfigFactory;
+use Elaphure\Exception\ConfigException;
+use Elaphure\Di\Compiler;
 
 /**
  * 框架内核类
@@ -70,6 +71,11 @@ class Elaphure
         );
     }
     
+    /**
+     * 获取默认配置信息
+     * 
+     * @return \Elaphure\Config\Config
+     */
     public static function getDefaultConfig()
     {
         return new Config([
@@ -81,17 +87,58 @@ class Elaphure
                 'writer' => '',
             ],
             'session' => [
-                ''
+                'engine' => 'memcache',
             ],
         ]);
     }
 
-    public static function createApplication()
+    /**
+     * 创建 Application 对象
+     * 
+     * 尝试从 $bootstrap 文件中恢复对象。如果恢复失败，重新根据配置信息创建各个对象。
+     * @param string|array $config 配置文件名或包含配置信息的数组。
+     * @param string $bootstrap 启动文件。
+     * @return \Elaphure\Application 返回 Application 对象。
+     */
+    public static function createApplication($config, $bootstrap)
     {
-        function () {
+        $boot = function () use ($config) {
+            $config = self::getDefaultConfig()->merge(
+                is_array($config) ? new Config($config) : Config::load($config)
+            );
+            
+            $appName = $config->get('application.name');
+            if (empty($appName)) {
+                throw new ConfigException(
+                    self::_('Missing "%s" in configuration', 'application.name')
+                );
+            }
+            $app = new Application($appName);
+
             $di = new Di();
-            $config = new Config(ConfigFactory::read($filename));
-            $app = new Application();
+            
+            $diCompiler = new Compiler();
+            $diPredefinitions = '[';
+            foreach ($config->get('services') as $serviceName => $diConfig) {
+                $diPredefinitions .= '[';
+                $diPredefinitions .= $diCompiler->compile($diConfig);
+                $diPredefinitions .= ",\'";
+                $diPredefinitions .= isset($diConfig['shared']) && $diConfig['shared'] ? 'true' : 'false';
+                $diPredefinitions .= "\'";
+                $diPredefinitions .= '],';
+            }
+            $diPredefinitions .= ']';
+            
+            $di->setPredefinitions($predefinitions);
+            
+            $app->setDi($di);
+            $di->register('application', $app, true);
+            return $app;
         };
+        
+        $app = include $bootstrap;
+        if ($app === false) {
+            $app = $boot();
+        }
     }
 }

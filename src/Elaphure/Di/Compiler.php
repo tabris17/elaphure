@@ -64,7 +64,6 @@ class Compiler
      * $demo = [
      *      'class'=>'asd',
      *      'shared' => true,
-     *      'default' => true, // 注册为默认接口
      *      'params' => [
      *          'str_param1' => 'value1',
      *          '*service1' => 'logger',
@@ -81,10 +80,9 @@ class Compiler
      * ];
      * </code>
      * @param array $config 配置信息。
-     * @param array $interfaces 输出类实现的接口。
      * @return string 返回 PHP 代码。
      */
-    public function compile(array $config, &$interfaces = null)
+    public function compile(array $config)
     {
         if (empty($config['class'])) {
             throw new Exception\ConfigException(Elaphure::_('Missing class name'));
@@ -111,12 +109,8 @@ class Compiler
         $body .= $this->getSettersCode($refClass, $getConfig('setters', []));
         $body .= $this->getDependenceSettingCode($className);
         $body .= $this->getMethodsCode($refClass, $getConfig('methods', []));
-        
-        $shared = 'false';
-        if (isset($config['shared'])) {
-            $shared = $config['shared'] ? 'true' : 'false';
-        }
-        return "[function(\$di){{$body}},$shared]";
+
+        return "function(\$di){{$body}}";
     }
     
     /**
@@ -135,7 +129,11 @@ class Compiler
             if ($setter[0] === '*') {
                 $serviceName = $value;
                 $methodName = 'set' . substr($setter, 1);
-                $value = "\$di->get(".var_export($serviceName, true).")";
+                if (is_array($serviceName)) {
+                    $value = 'call_user_func('.$this->compile($serviceName).',$di)';
+                } else {
+                    $value = "\$di->get(".var_export($serviceName, true).")";
+                }
             } else {
                 $methodName = "set$methodName";
                 $value = var_export($value, true);
@@ -204,7 +202,11 @@ class Compiler
             if ($propertyName[0] === '*') {
                 $serviceName = substr($propertyName, 1);
                 $code .= "\$obj->{$serviceName}=";
-                $code .= "\$di->get(".var_export($serviceName, true).")";
+                if (is_array($serviceName)) {
+                    $code .= 'call_user_func('.$this->compile($serviceName).',$di)';
+                } else {
+                    $code .= "\$di->get(".var_export($serviceName, true).")";
+                }
             } else {
                 $code .= "\$obj->{$propertyName}=";
                 $code .= var_export($value, true);
@@ -249,7 +251,11 @@ class Compiler
                 $params[] = var_export($paramValue, true);
             } elseif (isset($args["*$paramName"])) {
                 $serviceName = $args["*$paramName"];
-                $params[] = "\$di->get(".var_export($serviceName, true).")";
+                if (is_array($serviceName)) {
+                    $params[] = 'call_user_func('.$this->compile($serviceName).', $di)';
+                } else {
+                    $params[] = "\$di->get(".var_export($serviceName, true).")";
+                }
             } elseif ($refParam->isDefaultValueAvailable()) {
                 $paramDefaultValue = $refParam->getDefaultValue();
                 $params[] = var_export($paramDefaultValue);

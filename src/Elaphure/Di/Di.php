@@ -22,6 +22,52 @@ class Di implements DiInterface
     protected $services = [];
     
     /**
+     *
+     * @var array
+     */
+    protected $predefinitions = [];
+    
+    /**
+     * 设置服务预定义函数
+     * 
+     * @param array $definitions
+     * @return void
+     */
+    public function setPredefinitions($predefinitions)
+    {
+        $this->predefinitions = $predefinitions;
+    }
+    
+    /**
+     * 获取服务预定义函数
+     * 
+     * @return array
+     */
+    public function getPredefinitions()
+    {
+        return $this->predefinitions;
+    }
+    
+    /**
+     * 使用预定义函数生成服务
+     *
+     * @param string $name 服务名。
+     * @return \Ela\Di\ServiceInterface|bool 如果不存在相对应的预定义函数则返回 false，否则返回服务实例。
+     */
+    protected function registerFromPredefinition($name)
+    {
+        if (isset($this->predefinitions[$name])) {
+            list($definition, $shared) = $this->predefinitions[$name];
+            $this->services[$name] = $service = new Service();
+            $service->setName($name);
+            $service->setDefinition($definition);
+            $service->setShared($shared);
+            return $service;
+        }
+        return false;
+    }
+    
+    /**
      * (non-PHPdoc)
      * @see \Elaphure\Di\DiInterface::register()
      */
@@ -55,7 +101,8 @@ class Di implements DiInterface
     public function getService($name)
     {
         if (empty($this->services[$name])) {
-            $service = $this->lazyRegister($name);
+            // 如果服务不存在，尝试通过配置信息来注册服务
+            $service = $this->registerFromPredefinition($name);
             if (false === $service) {
                 return false;
             }
@@ -64,7 +111,7 @@ class Di implements DiInterface
         }
         return $service;
     }
-    
+     
     /**
      * (non-PHPdoc)
      * @see \Elaphure\Di\DiInterface::getServices()

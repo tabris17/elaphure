@@ -265,18 +265,29 @@ class Config implements \ArrayAccess
      * 获取配置信息
      * 
      * @param string $key 配置分支名。
-     * @return string|array 返回配置信息。
+     * @return mixed 返回配置信息。
      */
     public function get($key)
     {
         if (isset($this->$key)) return $this->$key;
+    }
+    
+    /**
+     * 是否存在键名
+     * 
+     * @param string $key 配置分支名。
+     * @return bool 返回是否存在键名。
+     */
+    public function has($key)
+    {
+        return isset($this->$offset);
     }
 
     /**
      * 设置配置信息
      * 
      * @param string $key 配置分支名。
-     * @param string|array $value 配置信息。
+     * @param mixed $value 配置信息。
      * @return void
      * @throws \Elaphure\Config\Exception 只读模式下抛出异常。
      */

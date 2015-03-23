@@ -11,6 +11,41 @@ namespace Elaphure\Http;
 class Response
 {
     /**
+     * 服务器出错
+     * 
+     * @const int
+     */
+    const STATUS_SERVER_ERROR = 500;
+    
+    /**
+     * 服务不可用
+     * 
+     * @const int
+     */
+    const STATUS_SERVICE_UNAVAILABLE = 5.3;
+
+    /**
+     * 页面未找到
+     *
+     * @const int
+     */
+    const STATUS_NOT_FOUND = 404;
+    
+    /**
+     * 禁止访问
+     * 
+     * @const int
+     */
+    const STATUS_FORBIDDEN = 403;
+    
+    /**
+     * 正常
+     * 
+     * @const int
+     */
+    const STATUS_OK = 200;
+    
+    /**
      * HTTP 状态码
      * 
      * @var array
