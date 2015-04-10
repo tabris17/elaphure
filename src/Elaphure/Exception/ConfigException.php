@@ -6,9 +6,12 @@
  * @author    tabris17 <elaphure@fournoas.com>
  * @version   1.0.0
  */
-namespace Elaphure\Http;
+namespace Elaphure\Exception;
 
-class Cookie
-{
-    
-}
+use Elaphure\Exception;
+
+/**
+ * 配置文件异常
+ */
+class ConfigException extends \RuntimeException implements Exception
+{ }

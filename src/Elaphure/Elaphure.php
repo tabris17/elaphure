@@ -100,7 +100,7 @@ class Elaphure
      * @param string $bootstrap 启动文件。
      * @return \Elaphure\Application 返回 Application 对象。
      */
-    public static function createApplication($config, $bootstrap)
+    public static function app($config, $bootstrap)
     {
         $boot = function () use ($config) {
             $config = self::getDefaultConfig()->merge(

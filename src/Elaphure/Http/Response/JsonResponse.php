@@ -6,19 +6,19 @@
  * @author    tabris17 <elaphure@fournoas.com>
  * @version   1.0.0
  */
-namespace Elaphure;
+namespace Elaphure\Http;
 
 /**
- * 路由类
+ * 响应 Json 数据
  */
-class Router
+class Json extends Response
 {
     /**
      * 
-     * @param array $rules
+     * @param mixed $data
      */
-    public function __construct($rules)
+    public function __construct($data)
     {
-        
+        parent::__construct(json_encode($data));
     }
 }

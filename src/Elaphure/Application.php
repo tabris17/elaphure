@@ -16,6 +16,7 @@ use Elaphure\Log\LoggerAwareInterface;
 use Elaphure\Log\LoggerAwareTrait;
 use Elaphure\Config\Config;
 use Elaphure\Http\Response;
+use Elaphure\Http\Request;
 
 /**
  * 应用类
@@ -49,18 +50,18 @@ class Application implements
     const EVENT_SHUTDOWN = 'shutdown';
     
     /**
-     * 请求前事件
+     * 运行之前的事件
      *
      * @const string
      */
-    const EVENT_BEFORE_REQUEST = 'before request';
+    const EVENT_PRE_RUN = 'pre-run';
     
     /**
-     * 请求后事件
+     * 运行之后的事件
      *
      * @const string
      */
-    const EVENT_AFTER_REQUEST = 'after request';
+    const EVENT_POST_RUN = 'post-run';
     
     
     /**
@@ -69,20 +70,6 @@ class Application implements
      * @var \Elaphure\Router
      */
     protected $router;
-    
-    /**
-     * 请求对象
-     * 
-     * @var \Elaphure\Http\Request
-     */
-    protected $request;
-    
-    /**
-     * 响应对象
-     * 
-     * @var \Elaphure\Http\Response
-     */
-    protected $response;
     
     /**
      * 名称
@@ -115,26 +102,7 @@ class Application implements
     {
         $this->name = $name;
     }
-    
-    /**
-     * 获取响应对象
-     * 
-     * @return \Elaphure\Http\Response
-     */
-    public function getResponse()
-    {
-        return $this->response;
-    }
-    
-    /**
-     * 获取请求对象
-     * 
-     * @return \Elaphure\Http\Request
-     */
-    public function getRequest()
-    {
-        return $this->request;
-    }
+
 
     /**
      * 获取路由器
@@ -153,6 +121,10 @@ class Application implements
     public function run()
     {
         $result = $this->triggerEvent(self::EVENT_BEFORE_REQUEST, null, true);
+        if ($result && $result->isDefaultPrevented()) {
+            return;
+        }
+        $request = new Request();
         $this->triggerEvent(self::EVENT_AFTER_REQUEST);
     }
     
