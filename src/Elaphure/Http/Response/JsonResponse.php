@@ -6,7 +6,9 @@
  * @author    tabris17 <elaphure@fournoas.com>
  * @version   1.0.0
  */
-namespace Elaphure\Http;
+namespace Elaphure\Http\Response;
+
+use Elaphure\Http\Response;
 
 /**
  * 响应 Json 数据

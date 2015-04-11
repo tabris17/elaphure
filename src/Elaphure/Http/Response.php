@@ -8,6 +8,12 @@
  */
 namespace Elaphure\Http;
 
+use Elaphure\Http\Response\Headers;
+use Elaphure\Http\Exception\UnknownResponseStatus;
+use Elaphure;
+use Elaphure\Http\Response\Cookies;
+use Elaphure\Http\Exception\UnknownProtocol;
+
 /**
  * 响应类
  */
@@ -21,11 +27,25 @@ class Response
     protected $status;
     
     /**
+     * HTTP 协议版本
+     * 
+     * @var string
+     */
+    protected $protocol = 'HTTP/1.1';
+    
+    /**
      * 响应头部
      * 
-     * @var unknown
+     * @var \Elaphure\Http\Response\Headers
      */
     protected $headers;
+    
+    /**
+     * Cookies
+     * 
+     * @var \Elaphure\Http\Response\Cookies
+     */
+    protected $cookies;
     
     /**
      * 响应本体
@@ -176,22 +196,26 @@ class Response
     {
         $this->body = $body;
         $this->status = $status;
-    }
-    
-    public function getHeaders()
-    {
-        //return 
+        $this->headers = new Headers();
+        $this->cookies = new Cookies();
     }
     
     /**
      * 设置响应状态码
      * 
      * @param int $code 响应状态码。
-     * @return bool 返回执行是否成功。
+     * @return void
+     * @throws \Elaphure\Http\Exception\UnknownResponseStatus
      */
-    public function setStatus($code)
+    public function setStatus($status)
     {
-        return $code == http_response_code($code);
+        $status = (int)$status;
+        if (empty(self::$statusMessages[$status])) {
+            throw new UnknownResponseStatus(
+                sprintf(Elaphure::_('Unknown response status code "%s"'), $status)
+            );
+        }
+        $this->status = $status;
     }
     
     /**
@@ -201,76 +225,82 @@ class Response
      */
     public function getStatus()
     {
-        return http_response_code();
-    }    
-    
-    public function sendFile($filename, $attachmentName = null)
-    {
-        
-    }
-    
-    public function send()
-    {
-        
-    }
-    
-    public function setHeader($name, $value)
-    {
-        
+        return $this->status;
     }
     
     /**
-     * HTTP 头部是否已经发送
      * 
-     * @return bool 返回 true 则说明 HTTP 头部已经发生，无法使用 setHeader 方法来添加头部信息。
+     * @param string $protocol
+     * @return void
+     * @throws \Elaphure\Http\Exception\UnknownProtocol
      */
-    public function isHeadersSent()
+    public function setProtocol($protocol)
     {
-        return headers_sent();
-    }
-    
-    public function getContent()
-    {
-        
-    }
-    
-    public function setContent()
-    {
-        
-    }
-    
-    public function appendContent()
-    {
-        
+        if ($protocol !== 'HTTP/1.1' && $protocol !== 'HTTP/1.0') {
+            throw new UnknownProtocol(
+                sprintf(Elaphure::_('Unknown HTTP version "%s"'), $status)
+            );
+        }
+        $this->protocol = $protocol;
     }
     
     /**
-     * 设置 Cookie
+     * 获取协议版本
      * 
-     * @param string $name 键名。
-     * @param string $value 保存的值。
-     * @param int $exprie 过期时间。单位为秒。如果是 0，表示 Cookie 在浏览器会话结束后过期。
-     * @param string $path 对应的服务器路径。
-     * @param string $domain 对应的域名。
-     * @param string $isSecure 如果为 true，则只有当前连接为 HTTPS 时才传送 Cookie。
-     * @param string $httpOnly 如果为 true，则 Cookie 不允许浏览器脚本访问。
-     * @return bool 成功则返回 true；如果响应数据已经发送，则返回 false。
+     * @return string 返回 "HTTP/1.0" 或 "HTTP/1.1"。
      */
-    public function setCookie($name, $value, 
-        $exprie = 0, $path = null, $domain = null, $isSecure = false, $httpOnly = false)
+    public function getProtocol()
     {
-        return setcookie($name, $value, $exprie, $path, $domain, $isSecure, $httpOnly);
+        return $this->protocol;
     }
     
     /**
-     * 删除 Cookie
+     * 获取响应头部对象
      * 
-     * @param string $name 键名。
-     * @return bool 成功则返回 true；如果响应数据已经发送，则返回 false。
+     * @return \Elaphure\Http\Response\Headers 返回响应头部对象。
      */
-    public function removeCookie($name)
+    public function getHeaders()
     {
-        return $this->setCookie($name, null, 1);
+        return $this->headers;
+    }
+    
+    /**
+     * 获取 Cookies 对象
+     * 
+     * @return \Elaphure\Http\Response\Cookies 返回 Cookies 对象。
+     */
+    public function getCookies()
+    {
+        return $this->cookies;
+    }
+    
+    /**
+     * 
+     * @return string
+     */
+    public function getBody()
+    {
+        return $this->body;
+    }
+    
+    /**
+     * 
+     * @param string $body
+     * @return void
+     */
+    public function setBody($body)
+    {
+        $this->body = $body;
+    }
+    
+    /**
+     *
+     * @param string $body
+     * @return void 
+     */
+    public function appendBody($body)
+    {
+        $this->body .= $body;
     }
     
     /**
@@ -278,12 +308,29 @@ class Response
      * 
      * @param string $url 重定向地址。
      * @param bool $permanently 是否永久转移。
-     * @return bool 返回执行是否成功。
+     * @return void
      */
     public function redirect($url, $permanently = false)
     {
         $code = $permanently ? self::STATUS_MOVED_PERMANENTLY : self::STATUS_FOUND;
         $this->setStatus($code);
-        return header('Location: ' . $url);
+        $this->headers->set('Location', $url);
+    }
+
+    /**
+     * 发送响应
+     * 
+     * @return void
+     */
+    public function send()
+    {
+        $status = $this->status;
+        if (isset($status) && $status !== self::STATUS_OK) {
+            $statusMessage = self::$statusMessages[$status];
+            header("$this->protocol $status $statusMessage");
+        }
+        $this->headers->send();
+        $this->cookies->send();
+        echo $this->body;
     }
 }
