@@ -27,7 +27,7 @@ class Response
     protected $status;
 
     /**
-     * 响应头部
+     * Headers
      * 
      * @var \Elaphure\Http\Response\Headers
      */
@@ -41,7 +41,7 @@ class Response
     protected $cookies;
     
     /**
-     * 响应本体
+     * 响应正文
      * 
      * @var string
      */
@@ -175,7 +175,7 @@ class Response
 
     /**
      * 
-     * @param string $body 响应本体。
+     * @param string $body 响应正文。
      * @param int $status 响应状态码。
      */
     public function __construct($body = '', $status = self::STATUS_OK)
@@ -235,8 +235,9 @@ class Response
     }
     
     /**
+     * 获取响应正文
      * 
-     * @return string
+     * @return string 返回响应正文。
      */
     public function getBody()
     {
@@ -244,8 +245,9 @@ class Response
     }
     
     /**
+     * 设置响应正文
      * 
-     * @param string $body
+     * @param string $body 响应正文。
      * @return void
      */
     public function setBody($body)
@@ -254,8 +256,9 @@ class Response
     }
     
     /**
-     *
-     * @param string $body
+     * 添加响应正文
+     * 
+     * @param string $body 响应正文。
      * @return void 
      */
     public function appendBody($body)
@@ -308,5 +311,42 @@ class Response
         }
         echo $this->body;
         $this->body = '';
+    }
+    
+    /**
+     * 允许 Nginx 缓冲数据
+     * 
+     * @return \Elaphure\Http\Response 返回当前对象。
+     */
+    public function enableNginxBuffering()
+    {
+        $this->headers->set('X-Accel-Buffering', 'yes');
+        return $this;
+    }
+    
+    /**
+     * 禁止 Nginx 缓冲数据
+     * 
+     * @return \Elaphure\Http\Response 返回当前对象。
+     */
+    public function disableNginxBuffering()
+    {
+        $this->headers->set('X-Accel-Buffering', 'no');
+        return $this;
+    }
+    
+    /**
+     * 设置 Nginx 缓存有效期
+     * 
+     * @param int $expire 缓存过期时间。单位为秒。小于等于 0，表示禁用缓存。
+     * @return \Elaphure\Http\Response 返回当前对象。
+     */
+    public function setNginxExpires($expire)
+    {
+        if ($expire <= 0) {
+            $expire = 'off';
+        }
+        $this->headers->set('X-Accel-Expires', $expire);
+        return $this;
     }
 }

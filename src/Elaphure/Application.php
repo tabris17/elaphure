@@ -17,6 +17,9 @@ use Elaphure\Log\LoggerAwareTrait;
 use Elaphure\Config\Config;
 use Elaphure\Http\Response;
 use Elaphure\Http\Request;
+use Elaphure\Http\Response\Exception\NotFound as HttpNotFound;
+use Elaphure\Http\Response\Exception\BadRequest as HttpBadRequest;
+use Elaphure\Http\Response\Exception\Forbidden as HttpForbidden;
 
 /**
  * 应用类
@@ -115,17 +118,32 @@ class Application implements
     }
     
     /**
+     * 运行主程序
      * 
      * @return void
      */
     public function run()
     {
-        $result = $this->triggerEvent(self::EVENT_BEFORE_REQUEST, null, true);
-        if ($result && $result->isDefaultPrevented()) {
-            return;
+        try {
+            $request = new Request($_REQUEST, $_GET, $_POST, $_COOKIE, $_FILES, $_SERVER);
+            $event = $this->triggerEvent(self::EVENT_BEFORE_REQUEST, $request, true);
+            if ($event && $event->isDefaultPrevented()) {
+                return;
+            }
+            
+            $event = $this->triggerEvent(self::EVENT_AFTER_REQUEST, $response, true);
+            if ($event && $event->isDefaultPrevented()) {
+                return;
+            }
+        } catch (HttpNotFound $exception) {
+            
+        } catch (HttpBadRequest $exception) {
+            
+        } catch (HttpForbidden $exception) {
+            
+        } catch (\Exception $exception) {
+            
         }
-        $request = new Request();
-        $this->triggerEvent(self::EVENT_AFTER_REQUEST);
     }
     
     /**
@@ -149,10 +167,10 @@ class Application implements
                     return false;
                 }
                 $this->response->status(Response::STATUS_SERVER_ERROR);
-                $this->response->write(
+                $this->response->setBody(
                     $this->outputErrorHtml($type, $message, $file, $line, $context)
                 );
-                $this->response->end();
+                $this->response->send();
             },
             empty($types) ? E_ALL | E_STRICT : $types
         );
@@ -173,8 +191,8 @@ class Application implements
                 return;
             }
             $this->response->status(Response::STATUS_SERVER_ERROR);
-            $this->response->write($this->outputExceptionHtml($exception));
-            $this->response->end();
+            $this->response->setBody($this->outputExceptionHtml($exception));
+            $this->response->send();
         });
     }
 

@@ -29,7 +29,7 @@ class XSendFileResponse extends Response
      */
     public function __construct($file, $contentType, $attachmentName = null)
     {
-        parent::__construct('');
+        parent::__construct();
         $this->file = $file;
         $this->contentType = $contentType;
         $this->attachmentName = isset($attachmentName) ? 
@@ -57,33 +57,6 @@ class XSendFileResponse extends Response
             $bytes = 'off';
         }
         $this->headers->set('X-Accel-Limit-Rate', $bytes);
-        return $this;
-    }
-    
-    /**
-     * 允许缓存下载文件
-     * 
-     * 仅 Nginx 下有效。
-     * @param int $expire 缓存过期时间。单位为秒。
-     * @return \Elaphure\Http\Response\SendFileResponse 返回当前对象。
-     */
-    public function enableSendFileCache($expire)
-    {
-        $this->headers->set('X-Accel-Buffering', 'yes');
-        $this->headers->set('X-Accel-Expires', $expire);
-        return $this;
-    }
-    
-    /**
-     * 禁止缓存下载文件
-     * 
-     * 仅 Nginx 下有效。
-     * @return \Elaphure\Http\Response\SendFileResponse 返回当前对象。
-     */
-    public function disableSendFileCache()
-    {
-        $this->headers->set('X-Accel-Buffering', 'no');
-        $this->headers->set('X-Accel-Expires', 'off');
         return $this;
     }
 }
