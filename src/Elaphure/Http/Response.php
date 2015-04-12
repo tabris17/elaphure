@@ -25,14 +25,7 @@ class Response
      * @var int
      */
     protected $status;
-    
-    /**
-     * HTTP 协议版本
-     * 
-     * @var string
-     */
-    protected $protocol = 'HTTP/1.1';
-    
+
     /**
      * 响应头部
      * 
@@ -53,13 +46,6 @@ class Response
      * @var string
      */
     protected $body;
-    
-    /**
-     * Cookie 集合
-     * 
-     * @var unknown
-     */
-    protected $cookies;
 
     /**
      * 服务器出错
@@ -192,7 +178,7 @@ class Response
      * @param string $body 响应本体。
      * @param int $status 响应状态码。
      */
-    public function __construct($body, $status = self::STATUS_OK)
+    public function __construct($body = '', $status = self::STATUS_OK)
     {
         $this->body = $body;
         $this->status = $status;
@@ -226,32 +212,6 @@ class Response
     public function getStatus()
     {
         return $this->status;
-    }
-    
-    /**
-     * 
-     * @param string $protocol
-     * @return void
-     * @throws \Elaphure\Http\Exception\UnknownProtocol
-     */
-    public function setProtocol($protocol)
-    {
-        if ($protocol !== 'HTTP/1.1' && $protocol !== 'HTTP/1.0') {
-            throw new UnknownProtocol(
-                sprintf(Elaphure::_('Unknown HTTP version "%s"'), $status)
-            );
-        }
-        $this->protocol = $protocol;
-    }
-    
-    /**
-     * 获取协议版本
-     * 
-     * @return string 返回 "HTTP/1.0" 或 "HTTP/1.1"。
-     */
-    public function getProtocol()
-    {
-        return $this->protocol;
     }
     
     /**
@@ -316,6 +276,20 @@ class Response
         $this->setStatus($code);
         $this->headers->set('Location', $url);
     }
+    
+    /**
+     * 清空数据
+     * 
+     * 包括 Headers、Cookies、Body 和 HTTP 状态码。
+     * @return void
+     */
+    public function clear()
+    {
+        $this->status = null;
+        $this->headers->clear();
+        $this->cookies->clear();
+        $this->body = '';
+    }
 
     /**
      * 发送响应
@@ -324,13 +298,15 @@ class Response
      */
     public function send()
     {
-        $status = $this->status;
-        if (isset($status) && $status !== self::STATUS_OK) {
-            $statusMessage = self::$statusMessages[$status];
-            header("$this->protocol $status $statusMessage");
+        if (!headers_sent()) {
+            $status = $this->status;
+            if (isset($status) && $status !== self::STATUS_OK) {
+                http_response_code($status);
+            }
+            $this->headers->send();
+            $this->cookies->send();
         }
-        $this->headers->send();
-        $this->cookies->send();
         echo $this->body;
+        $this->body = '';
     }
 }

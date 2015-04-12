@@ -109,5 +109,6 @@ class Headers
                 header("$name: $value");
             }
         }
+        $this->headers = [];
     }
 }

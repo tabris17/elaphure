@@ -23,7 +23,7 @@ class XSendFileResponse extends Response
     
     /**
      * 
-     * @param string $file 要发送的文件。
+     * @param string $file 文件路径。
      * @param string $contentType 文件类型。
      * @param string $attachmentName 附件文件名。
      */
@@ -84,19 +84,6 @@ class XSendFileResponse extends Response
     {
         $this->headers->set('X-Accel-Buffering', 'no');
         $this->headers->set('X-Accel-Expires', 'off');
-        return $this;
-    }
-    
-    /**
-     * 设置下载文件的字符集
-     * 
-     * 仅 Nginx 下有效。
-     * @param unknown $charset
-     * @return \Elaphure\Http\Response\SendFileResponse 返回当前对象。
-     */
-    public function setSendFileCharset($charset)
-    {
-        $this->headers->set('X-Accel-Charset', $charset);
         return $this;
     }
 }

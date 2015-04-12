@@ -162,5 +162,6 @@ class Cookies
         foreach ($this->cookies as $name => list($_1, $_2, $_3, $_4, $_5, $_6)) {
             setcookie($name, $_1, $_2, $_3, $_4, $_5, $_6);
         }
+        $this->cookies = [];
     }
 }
